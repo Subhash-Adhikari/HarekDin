@@ -1,6 +1,7 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { assets } from "../../assets/assets";
 import { useAppContext } from "../../context/appContext";
+import logo from "../../assets/logo.png";
 
 const SellerLayout = () => {
   const { setIsSeller } = useAppContext();
@@ -20,7 +21,7 @@ const SellerLayout = () => {
     <>
       <div className="flex items-center justify-between px-4 md:px-8 border-b border-gray-300 py-3 bg-white">
         <Link to="/">
-          <img className="cursor-pointer w-34 md:w-38" src={assets.logo} alt="logo" />
+          <img src={logo} alt="" className="h-12 w-12" />
         </Link>
         <div className="flex items-center gap-5 text-gray-500">
           <p>Hi! Sellers</p>

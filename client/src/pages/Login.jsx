@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import { login, register } from '../api/auth';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,42 +24,58 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validation for signup
-    if (!isLogin) {
-      if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
-        setIsLoading(false);
-        return;
+    try {
+      // Validation for signup
+      if (!isLogin) {
+        if (formData.password !== formData.confirmPassword) {
+          toast.error('Passwords do not match');
+          setIsLoading(false);
+          return;
+        }
+
+        if (formData.password.length < 6) {
+          toast.error('Password must be at least 6 characters');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Register new user
+        const registerData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          password_confirm: formData.confirmPassword
+        };
+        
+        const response = await register(registerData);
+        localStorage.setItem('tokens', JSON.stringify(response.tokens));
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+        toast.success('Account created successfully!');
+      } else {
+        // Login existing user
+        const loginData = {
+          email: formData.email,
+          password: formData.password
+        };
+        
+        const response = await login(loginData);
+        localStorage.setItem('tokens', JSON.stringify(response.tokens));
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+        toast.success('Login successful!');
       }
-
-      if (formData.password.length < 6) {
-        toast.error('Password must be at least 6 characters');
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    // Simulate authentication process
-    setTimeout(() => {
-      // Mock user object
-      const user = {
-        id: '123456',
-        name: isLogin ? 'Demo User' : formData.name,
-        email: formData.email,
-      };
-
-      // Store in localStorage for persistence
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
       
-      toast.success(isLogin ? 'Login successful!' : 'Account created successfully!');
-      setIsLoading(false);
       navigate('/');
-    }, 1500);
+    } catch (error) {
+      toast.error(error.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

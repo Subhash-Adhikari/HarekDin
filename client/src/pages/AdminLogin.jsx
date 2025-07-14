@@ -1,20 +1,51 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from '../api/auth';
+import toast from 'react-hot-toast';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const [isLoading, setIsLoading] = useState(false);
 
-    // Dummy login check (replace with real backend check)
-    if (email === "admin@harekdin.com" && password === "admin123") {
-      localStorage.setItem("admin", JSON.stringify({ email }));
-      navigate("/admin/dashboard");
-    } else {
-      alert("Invalid credentials!");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Attempt to login with admin credentials
+      const loginData = {
+        email: email,
+        password: password
+      };
+      
+      const response = await login(loginData);
+      
+      // Store tokens in localStorage
+      localStorage.setItem('tokens', JSON.stringify({
+        access: response.access,
+        refresh: response.refresh
+      }));
+      
+      // Check if user has admin privileges
+      // For now, we'll just check if the email matches a specific admin email or use is_staff from the user object
+      if (email === "admin@harekdin.com" || response.user.is_staff) {
+        localStorage.setItem("admin", JSON.stringify(response.user));
+        localStorage.setItem("user", JSON.stringify(response.user));
+        navigate("/admin");
+        toast.success("Admin login successful!");
+      } else {
+        // Remove tokens if not admin
+        localStorage.removeItem('tokens');
+        toast.error("You don't have admin privileges");
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      toast.error(error.message || "Invalid credentials!");
+    } finally {
+      setIsLoading(false);
     }
   };
 

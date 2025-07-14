@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import { register } from '../api/auth';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -23,41 +24,48 @@ const Signup = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
+    try {
+      // Validation
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('Passwords do not match');
+        setIsLoading(false);
+        return;
+      }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      setIsLoading(false);
-      return;
-    }
+      if (formData.password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        setIsLoading(false);
+        return;
+      }
 
-    // Simulate signup process
-    setTimeout(() => {
-      // Mock user object
-      const user = {
-        id: 'user_' + Date.now(),
+      // Register new user
+      const registerData = {
         name: formData.name,
         email: formData.email,
+        password: formData.password,
+        password_confirm: formData.confirmPassword,
         phone: formData.phone
       };
-
-      // Store in localStorage for persistence
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
+      
+      const response = await register(registerData);
+      localStorage.setItem('tokens', JSON.stringify({
+        access: response.access,
+        refresh: response.refresh
+      }));
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
       
       toast.success('Account created successfully!');
-      setIsLoading(false);
       navigate('/');
-    }, 1500);
+    } catch (error) {
+      toast.error(error.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
